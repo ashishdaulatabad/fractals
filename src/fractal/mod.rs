@@ -1,5 +1,5 @@
 use pixel_canvas::Color;
-use std::thread::{JoinHandle, ScopedJoinHandle};
+use std::thread::ScopedJoinHandle;
 mod burning_ship;
 mod julia;
 mod mandelbrot;

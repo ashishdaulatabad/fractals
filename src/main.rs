@@ -9,14 +9,6 @@ mod utils;
 
 fn main() {
     // The canvas will render for you at up to 60fps.
-    // let mut t = 0;
-    // for x in 0..1000 {
-    //     let p = std::time::Instant::now();
-    //     let _ = vec![vec![0; 1000]; 1000];
-    //     let te = p.elapsed().as_millis();
-    //     t += te;
-    // }
-    // println!("avg: {}ms  total: {}ms", t / 1000, t);
     let mut fractal: Fractal = Fractal::new()
         .set_window_dim(1600, 900)
         .set_num_threads(16)
