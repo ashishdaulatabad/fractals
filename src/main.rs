@@ -19,7 +19,7 @@ fn main() {
     // println!("avg: {}ms  total: {}ms", t / 1000, t);
     let mut fractal: Fractal = Fractal::new()
         .set_window_dim(1600, 900)
-        .set_num_threads(32)
+        .set_num_threads(16)
         .set_max_iter(120)
         .set_prec(fractal::Precision::F32)
         .set_iset(fractal::InstructionSet::SSE)
