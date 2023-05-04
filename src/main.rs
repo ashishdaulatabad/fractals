@@ -3,7 +3,7 @@ use fractal::Fractal;
 use pixel_canvas::{input::MouseState, Canvas};
 mod complex;
 mod fractal;
-mod polynomial;
+// mod polynomial;
 mod utils;
 
 fn main() {

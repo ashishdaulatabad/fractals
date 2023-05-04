@@ -3,6 +3,8 @@
 Fractals program written in rust.
 
 ## Dependency
+- [pixel-canvas](https://github.com/porglezomp/pixel-canvas)
+- [colorsys](https://github.com/emgyrz/colorsys.rs)
 
 # Screenshots
 
