@@ -3,6 +3,7 @@ use std::thread::ScopedJoinHandle;
 mod burning_ship;
 mod julia;
 mod mandelbrot;
+mod newton;
 
 type IterationType = u32;
 type FSignature =
@@ -15,6 +16,7 @@ pub enum FractalType {
     Mandelbrot,
     Julia,
     BurningShip,
+    Newton,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -200,6 +202,7 @@ fn draw_mt(
     let perform_op = match ftype {
         FractalType::BurningShip => burning_ship::fn_(prec, iset),
         FractalType::Julia => julia::fn_(prec, iset),
+        FractalType::Newton => newton::newton,
         _ => mandelbrot::fn_(prec, iset),
     };
     unsafe {
