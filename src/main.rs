@@ -1,7 +1,6 @@
 #![feature(stdsimd)]
 use fractal::Fractal;
 use pixel_canvas::{input::MouseState, Canvas};
-mod color;
 mod complex;
 mod fractal;
 mod polynomial;

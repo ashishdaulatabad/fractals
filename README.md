@@ -1,7 +1,10 @@
-# fractals
-Fractals in rust
+# Fractals
 
-Screenshots
+Fractals program written in rust.
+
+## Dependency
+
+# Screenshots
 
 ![dsa](images/julia1.png)
 

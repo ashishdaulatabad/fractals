@@ -10,7 +10,7 @@ opt-level = 1
 
 [dependencies]
 pixel-canvas = "0.2.2"
-colors-transform = "0.2.11"
 itertools = "0.10.5"
 conv = "0.3.3"
 num-traits = "0.2.15"
+colorsys = "0.6.7"
