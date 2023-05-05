@@ -1,4 +1,4 @@
-use crate::complex;
+use crate::utils::complex::{Complex32, Complex64};
 use core::arch::x86_64;
 
 use crate::fractal::{Block, IterationType};
@@ -28,8 +28,8 @@ pub fn mandelbrot(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f64;
 
@@ -37,7 +37,7 @@ pub fn mandelbrot(
         let y = ycoord as f64;
         for xcoord in 0..width {
             let x = xcoord as f64;
-            let a = complex::Complex::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
+            let a = Complex64::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
             let mut z = a;
             let mut iterations = 0;
             while iterations < max_iterations && z.abs_sq() < 4.0 {
@@ -61,8 +61,8 @@ pub unsafe fn mandelbrot_simd(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f64;
     let mut iterations;
@@ -123,7 +123,7 @@ pub unsafe fn mandelbrot_simd(
         }
         if rem & 1 > 0 {
             let x = (hend - 1) as f64;
-            let a = complex::Complex::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
+            let a = Complex64::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
             let mut z = a;
             let mut iterations = 0;
             while iterations < max_iterations && z.abs_sq() < 4.0 {
@@ -147,8 +147,8 @@ pub unsafe fn mandelbrot_simd256(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f64;
 
@@ -226,7 +226,7 @@ pub unsafe fn mandelbrot_simd256(
         }
         for xcoord in (width - rem)..width {
             let x = xcoord as f64;
-            let a = complex::Complex::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
+            let a = Complex64::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
             let mut z = a;
             let mut iterations = 0;
             while iterations < max_iterations && z.abs_sq() < 4.0 {
@@ -248,16 +248,16 @@ pub fn mandelbrotf32(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
-    let h = height as f64;
+    let h = height as f32;
 
     for ycoord in hstart..hend {
-        let y = ycoord as f64;
+        let y = ycoord as f32;
         for xcoord in 0..width {
-            let x = xcoord as f64;
-            let a = complex::Complex::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
+            let x = xcoord as f32;
+            let a = Complex32::new(x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
             let mut z = a;
             let mut iterations = 0;
             while iterations < max_iterations && z.abs_sq() < 4.0 {
@@ -281,8 +281,8 @@ pub unsafe fn mandelbrotf32_simd(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f32;
     let mut iterations;
@@ -300,7 +300,6 @@ pub unsafe fn mandelbrotf32_simd(
                 (x + 3.0) / h * 2.0 - 1.8,
             );
             let ay = x86_64::_mm_set1_ps(y / h * 2.0 - 1.0);
-            iterations = x86_64::_mm_set1_epi32(1);
             iterations = x86_64::_mm_set1_epi32(1);
             let mut zx = x86_64::_mm_set1_ps(0.0);
             let mut zy = x86_64::_mm_set1_ps(0.0);
@@ -353,19 +352,17 @@ pub unsafe fn mandelbrotf32_simd(
             block[ycoord - hstart][xcoord + 2] = iter[1] as IterationType;
             block[ycoord - hstart][xcoord + 3] = iter[0] as IterationType;
         }
-        for x in (width - rem)..width {
-            for xcoord in 0..width {
-                let x = xcoord as f32;
-                let a = (x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
-                let mut z = a;
-                let mut iterations = 1;
-                while iterations < max_iterations && z.0 * z.0 + z.1 * z.1 < 4.0 {
-                    z = (z.0 * z.0 - z.1 * z.1, 2.0 * z.0 * z.1);
-                    z = (z.0 + a.0, z.1 + a.1);
-                    iterations += 1;
-                }
-                block[ycoord - hstart][xcoord] = iterations as IterationType;
+        for xcoord in (width - rem)..width {
+            let x = xcoord as f32;
+            let a = (x / h * 2.0 - 1.8, y / h * 2.0 - 1.0);
+            let mut z = a;
+            let mut iterations = 1;
+            while iterations < max_iterations && z.0 * z.0 + z.1 * z.1 < 4.0 {
+                z = (z.0 * z.0 - z.1 * z.1, 2.0 * z.0 * z.1);
+                z = (z.0 + a.0, z.1 + a.1);
+                iterations += 1;
             }
+            block[ycoord - hstart][xcoord] = iterations as IterationType;
         }
     }
     (hstart, hend)
@@ -381,8 +378,8 @@ pub unsafe fn mandelbrotf32_simd256(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f32;
     let mut iterations;

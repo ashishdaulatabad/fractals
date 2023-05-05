@@ -1,7 +1,6 @@
 #![feature(stdsimd)]
 use fractal::Fractal;
 use pixel_canvas::{input::MouseState, Canvas};
-mod complex;
 mod fractal;
 // mod polynomial;
 mod utils;
@@ -11,9 +10,9 @@ fn main() {
     let mut fractal: Fractal = Fractal::new()
         .set_window_dim(1600, 900)
         .set_num_threads(16)
-        .set_max_iter(70)
+        .set_max_iter(127)
         .set_prec(fractal::Precision::F32)
-        .set_iset(fractal::InstructionSet::SSE)
+        .set_iset(fractal::InstructionSet::AVX)
         .set_fractal(fractal::FractalType::Julia)
         .set_pow(2);
 

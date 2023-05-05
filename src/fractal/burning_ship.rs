@@ -1,5 +1,5 @@
-use crate::complex;
 use crate::fractal::{Block, IterationType};
+use crate::utils::complex::Complex64;
 use core::arch::x86_64;
 
 use super::{FSignature, InstructionSet, Precision};
@@ -27,8 +27,8 @@ pub fn burning_ship(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f64;
 
@@ -38,7 +38,7 @@ pub fn burning_ship(
         for xcoord in 0..width {
             let x = xcoord as f64;
             let mut iterations = 1;
-            let a = complex::Complex::new(x / h * 2.0 - 2.0, y / h * 2.0 - 0.5);
+            let a = Complex64::new(x / h * 2.0 - 2.0, y / h * 2.0 - 0.5);
             let mut z = a;
 
             while iterations < max_iterations && z.abs_sq() < 4.0 {
@@ -65,11 +65,10 @@ pub unsafe fn burning_ship_simd(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f64;
-
     let mut iterations;
     let rem = width & 1;
 
@@ -126,6 +125,23 @@ pub unsafe fn burning_ship_simd(
             block[ycoord - hstart][xcoord] = iter[1] as IterationType;
             block[ycoord - hstart][xcoord + 1] = iter[0] as IterationType;
         }
+        if rem & 1 > 0 {
+            let x = (width - 1) as f64;
+            let mut iterations = 1;
+            let a = Complex64::new(x / h * 2.0 - 2.0, y / h * 2.0 - 0.5);
+            let mut z = a;
+
+            while iterations < max_iterations && z.abs_sq() < 4.0 {
+                z.real = if z.real > 0.0 { -z.real } else { z.real };
+                z.img = if z.img > 0.0 { z.img } else { -z.img };
+
+                z = z.ipow(pow);
+                z += a;
+                iterations += 1;
+            }
+
+            block[ycoord - hstart][width - 1] = iterations as IterationType;
+        }
     }
     (hstart, hend)
 }
@@ -140,8 +156,8 @@ pub unsafe fn burning_ship_simd256(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f64;
     let mut iter: [i64; 4] = [0; 4];
@@ -224,7 +240,7 @@ pub unsafe fn burning_ship_simd256(
         for xcoord in (width - rem)..width {
             let x = xcoord as f64;
             let mut iterations = 1;
-            let a = complex::Complex::new(x / h * 2.0 - 2.0, y / h * 2.0 - 0.5);
+            let a = Complex64::new(x / h * 2.0 - 2.0, y / h * 2.0 - 0.5);
             let mut z = a;
 
             while iterations < max_iterations && z.abs_sq() < 4.0 {
@@ -250,8 +266,8 @@ pub fn burning_shipf32(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f64;
 
@@ -261,7 +277,7 @@ pub fn burning_shipf32(
         for xcoord in 0..width {
             let x = xcoord as f64;
             let mut iterations = 1;
-            let a = complex::Complex::new(x / h * 2.0 - 2.0, y / h * 2.0 - 0.5);
+            let a = Complex64::new(x / h * 2.0 - 2.0, y / h * 2.0 - 0.5);
             let mut z = a;
 
             while iterations < max_iterations && z.abs_sq() < 4.0 {
@@ -288,8 +304,8 @@ pub unsafe fn burning_shipf32_simd(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f32;
 
@@ -374,8 +390,8 @@ pub unsafe fn burning_shipf32_simd256(
     width: usize,
     height: usize,
     block: &mut Vec<Vec<u32>>,
-    xpos: i32,
-    ypos: i32,
+    _: i32,
+    _: i32,
 ) -> Block {
     let h = height as f32;
 
@@ -474,7 +490,7 @@ pub unsafe fn burning_shipf32_simd256(
             let hh = h as f64;
             let yy = y as f64;
             let mut iterations = 1;
-            let a = complex::Complex::new(x / hh * 2.0 - 2.0, yy / hh * 2.0 - 0.5);
+            let a = Complex64::new(x / hh * 2.0 - 2.0, yy / hh * 2.0 - 0.5);
             let mut z = a;
 
             while iterations < max_iterations && z.abs_sq() < 4.0 {

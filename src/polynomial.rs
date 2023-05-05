@@ -1,4 +1,4 @@
-use crate::complex::Complex;
+use crate::utils::complex6464::Complex64;
 use conv::prelude::*;
 use core::fmt;
 use itertools::Itertools;
@@ -25,7 +25,7 @@ impl PolynomialOperationTypes for i64 {}
 impl PolynomialOperationTypes for i128 {}
 impl PolynomialOperationTypes for f32 {}
 impl PolynomialOperationTypes for f64 {}
-impl PolynomialOperationTypes for Complex {}
+impl PolynomialOperationTypes for Complex64 {}
 
 #[derive(Debug, Clone)]
 pub struct Polynomial<T: PolynomialOperationTypes>

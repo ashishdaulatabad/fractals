@@ -9,7 +9,7 @@ pub fn build_color_array(max_iter: u32) -> Vec<Color> {
         let fr = i / fmx;
         let intensity: f32 = fr.sqrt() as f32;
         let quad_intensity: f32 = intensity.sqrt() as f32;
-        let deg: f32 = 90_f32;
+        let deg: f32 = 270_f32;
         let hue: f32 = quad_intensity * 100.0;
         let rgb: Rgb = Rgb::from(Hsl::from((deg - 12.0_f32, hue, quad_intensity * 80.0)));
         color_array.push(Color {

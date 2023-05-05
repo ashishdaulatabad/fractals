@@ -43,6 +43,7 @@ pub struct Fractal {
     iset: InstructionSet,
     precision: Precision,
     th_block: Vec<Vec<Vec<u32>>>,
+    curr_func: FSignature,
 }
 
 impl Fractal {
@@ -58,11 +59,13 @@ impl Fractal {
             iset: InstructionSet::None,
             precision: Precision::F32,
             th_block: vec![vec![vec![0; 1280]; 720]; 1],
+            curr_func: mandelbrot::mandelbrotf32,
         }
     }
 
     pub fn set_iset(mut self, iset: InstructionSet) -> Self {
         self.iset = iset;
+        self.set_func();
         self
     }
 
@@ -73,6 +76,7 @@ impl Fractal {
 
     pub fn set_prec(mut self, prec: Precision) -> Self {
         self.precision = prec;
+        self.set_func();
         self
     }
 
@@ -80,6 +84,15 @@ impl Fractal {
         self.max_iter = iter;
         self.color_buffer = crate::utils::color::build_color_array(iter as u32);
         self
+    }
+
+    fn set_func(&mut self) {
+        self.curr_func = match self.fractal_type {
+            FractalType::BurningShip => burning_ship::fn_(self.precision, self.iset),
+            FractalType::Julia => julia::fn_(self.precision, self.iset),
+            FractalType::Newton => newton::newton,
+            _ => mandelbrot::fn_(self.precision, self.iset),
+        };
     }
 
     pub fn set_num_threads(mut self, threads: u8) -> Self {
@@ -125,6 +138,7 @@ impl Fractal {
 
     pub fn set_fractal(mut self, ftype: FractalType) -> Self {
         self.fractal_type = ftype;
+        self.set_func();
         self
     }
 
@@ -136,13 +150,9 @@ impl Fractal {
     }
 
     pub fn draw_st(&mut self, image: &mut pixel_canvas::Image, xpos: i32, ypos: i32) {
-        let perform_op = match self.fractal_type {
-            FractalType::BurningShip => burning_ship::fn_(self.precision, self.iset),
-            FractalType::Julia => julia::fn_(self.precision, self.iset),
-            _ => mandelbrot::fn_(self.precision, self.iset),
-        };
+        let func = self.curr_func;
         let (_, _) = unsafe {
-            perform_op(
+            func(
                 0,
                 self.height as usize,
                 self.max_iter as u32,
@@ -167,17 +177,15 @@ impl Fractal {
         draw_mt(
             image,
             &self.color_buffer,
-            self.fractal_type,
             self.width,
             self.height,
             self.max_iter,
-            self.precision,
-            self.iset,
             self.pow,
             thread,
             &mut self.th_block,
             xpos,
             ypos,
+            self.curr_func,
         );
     }
 }
@@ -185,26 +193,19 @@ impl Fractal {
 fn draw_mt(
     image: &mut pixel_canvas::Image,
     color: &Vec<Color>,
-    ftype: FractalType,
     width: u16,
     height: u16,
     max_iter: u16,
-    prec: Precision,
-    iset: InstructionSet,
     pow: u32,
     thread: u8,
     blocks: &mut Vec<Vec<Vec<u32>>>,
     xpos: i32,
     ypos: i32,
+    curr_func: FSignature,
 ) {
     let sthread_height: usize = (height / (thread as u16)) as usize;
 
-    let perform_op = match ftype {
-        FractalType::BurningShip => burning_ship::fn_(prec, iset),
-        FractalType::Julia => julia::fn_(prec, iset),
-        FractalType::Newton => newton::newton,
-        _ => mandelbrot::fn_(prec, iset),
-    };
+    let perform_op = curr_func;
     unsafe {
         std::thread::scope(|scope| {
             let _ = blocks
@@ -230,7 +231,7 @@ fn draw_mt(
     }
     for (i, block) in blocks.iter().enumerate() {
         for (col, val) in block.iter().enumerate() {
-            for (row, elem) in val.iter().enumerate() {
+            for (row, _) in val.iter().enumerate() {
                 let idx = blocks[i][col as usize][row] as usize;
                 image[pixel_canvas::RC(sthread_height * i + col as usize, row)] = color[idx];
             }
