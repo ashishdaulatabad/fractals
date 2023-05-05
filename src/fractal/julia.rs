@@ -56,7 +56,6 @@ pub fn julia(
 }
 
 #[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2")]
 pub unsafe fn julia_simd(
     hstart: usize,
     hend: usize,
@@ -138,7 +137,7 @@ pub unsafe fn julia_simd(
 }
 
 #[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2")]
+#[target_feature(enable = "avx")]
 pub unsafe fn julia_simd256(
     hstart: usize,
     hend: usize,
@@ -272,7 +271,6 @@ pub fn juliaf32(
 }
 
 #[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2")]
 pub unsafe fn juliaf32_simd(
     hstart: usize,
     hend: usize,
@@ -288,6 +286,11 @@ pub unsafe fn juliaf32_simd(
     let mut iterations;
     let rem = width & 3;
 
+    let splat = x86_64::_mm_set_ps(0.0, 1.0, 2.0, 3.0);
+    let fc = x86_64::_mm_set1_ps(2.0);
+    let orig = x86_64::_mm_set1_ps(1.8);
+    let sheight = x86_64::_mm_set1_ps(h);
+
     let xfpos = xpos as f32 / h * 2.0 - 1.8;
     let yfpos = ypos as f32 / h * 2.0 - 1.0;
     for ycoord in hstart..hend {
@@ -298,12 +301,11 @@ pub unsafe fn juliaf32_simd(
             let ax = x86_64::_mm_set1_ps(xfpos);
             let ay = x86_64::_mm_set1_ps(yfpos);
             iterations = x86_64::_mm_set1_epi32(1);
-            let mut zx = x86_64::_mm_set_ps(
-                x / h * 2.0 - 1.8,
-                (x + 1.0) / h * 2.0 - 1.8,
-                (x + 2.0) / h * 2.0 - 1.8,
-                (x + 3.0) / h * 2.0 - 1.8,
-            );
+
+            let mut zx = x86_64::_mm_set1_ps(x);
+            zx = x86_64::_mm_mul_ps(x86_64::_mm_add_ps(zx, splat), fc);
+            zx = x86_64::_mm_sub_ps(x86_64::_mm_div_ps(zx, sheight), orig);
+
             let mut zy = x86_64::_mm_set1_ps(y / h * 2.0 - 1.0);
 
             let iter_cmp = x86_64::_mm_set1_epi32(max_iterations as i32);
@@ -322,7 +324,7 @@ pub unsafe fn juliaf32_simd(
                 zy = x86_64::_mm_add_ps(zy, ay);
                 let mg = x86_64::_mm_add_ps(x86_64::_mm_mul_ps(zx, zx), x86_64::_mm_mul_ps(zy, zy));
                 let cmp_mg = x86_64::_mm_cmplt_ps(mg, compare);
-                let value = x86_64::_mm_movemask_ps(cmp_mg) as i32;
+                let value = x86_64::_mm_movemask_ps(cmp_mg);
                 if value == 0 {
                     break;
                 }
@@ -395,7 +397,6 @@ pub unsafe fn juliaf32_simd256(
         let y = ycoord as f32;
         for xcoord in (0..(width - rem)).step_by(8) {
             let x = xcoord as f32;
-            // print!("start {} ", ycoord);
             let ax = x86_64::_mm256_set1_ps(xfpos);
             let ay = x86_64::_mm256_set1_ps(yfpos);
             let mut iterations = x86_64::_mm256_set1_epi32(1);
@@ -403,16 +404,6 @@ pub unsafe fn juliaf32_simd256(
             let mut zx = x86_64::_mm256_set1_ps(x);
             zx = x86_64::_mm256_mul_ps(x86_64::_mm256_add_ps(zx, splat), fc);
             zx = x86_64::_mm256_sub_ps(x86_64::_mm256_div_ps(zx, sheight), orig);
-            // let mut zx = x86_64::_mm256_set_ps(
-            //     x / h * 2.0 - 1.8,
-            //     (x + 1.0) / h * 2.0 - 1.8,
-            //     (x + 2.0) / h * 2.0 - 1.8,
-            //     (x + 3.0) / h * 2.0 - 1.8,
-            //     (x + 4.0) / h * 2.0 - 1.8,
-            //     (x + 5.0) / h * 2.0 - 1.8,
-            //     (x + 6.0) / h * 2.0 - 1.8,
-            //     (x + 7.0) / h * 2.0 - 1.8,
-            // );
             let mut zy = x86_64::_mm256_set1_ps(y / h * 2.0 - 1.0);
 
             let iter_cmp = x86_64::_mm256_set1_epi32(max_iterations as i32);

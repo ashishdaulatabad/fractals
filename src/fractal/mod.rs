@@ -111,6 +111,7 @@ impl Fractal {
         self
     }
 
+    #[inline]
     pub fn get_dim(&self) -> (u16, u16) {
         (self.width, self.height)
     }
@@ -136,12 +137,14 @@ impl Fractal {
         self
     }
 
+    #[inline]
     pub fn set_fractal(mut self, ftype: FractalType) -> Self {
         self.fractal_type = ftype;
         self.set_func();
         self
     }
 
+    #[inline(always)]
     pub fn draw(&mut self, image: &mut pixel_canvas::Image, xpos: i32, ypos: i32) {
         match self.num_threads {
             None => self.draw_st(image, xpos, ypos),
@@ -173,6 +176,7 @@ impl Fractal {
         }
     }
 
+    #[inline(always)]
     pub fn draw_mt(&mut self, image: &mut pixel_canvas::Image, thread: u8, xpos: i32, ypos: i32) {
         draw_mt(
             image,

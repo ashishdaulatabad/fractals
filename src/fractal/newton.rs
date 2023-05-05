@@ -24,7 +24,7 @@ pub fn newton(
         Complex32::new(-0.5, 3.0_f32.sqrt() / 2.0),
         Complex32::new(-0.5, -3.0_f32.sqrt() / 2.0),
     ];
-    let a = Complex32::new(-0.03125, 0.0);
+    let a = Complex32::new(-0.0625, 0.0);
 
     let tol = 1e-6;
     for ycoord in hstart..hend {
