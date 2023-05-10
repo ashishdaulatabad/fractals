@@ -52,7 +52,8 @@ pub fn mandelbrot(
 }
 
 #[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2")]
+#[target_feature(enable = "sse")]
+#[target_feature(enable = "sse2")]
 pub unsafe fn mandelbrot_simd(
     hstart: usize,
     hend: usize,
@@ -138,6 +139,7 @@ pub unsafe fn mandelbrot_simd(
 }
 
 #[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx")]
 #[target_feature(enable = "avx2")]
 pub unsafe fn mandelbrot_simd256(
     hstart: usize,
@@ -272,7 +274,8 @@ pub fn mandelbrotf32(
 }
 
 #[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2")]
+#[target_feature(enable = "sse")]
+#[target_feature(enable = "sse2")]
 pub unsafe fn mandelbrotf32_simd(
     hstart: usize,
     hend: usize,
@@ -332,10 +335,10 @@ pub unsafe fn mandelbrotf32_simd(
                 iterations = x86_64::_mm_add_epi32(
                     iterations,
                     x86_64::_mm_set_epi32(
-                        (value & 8) >> 3,
-                        (value & 4) >> 2,
-                        (value & 2) >> 1,
                         value & 1,
+                        (value & 2) >> 1,
+                        (value & 4) >> 2,
+                        (value & 8) >> 3,
                     ),
                 );
                 let cmp_iter = x86_64::_mm_cmpeq_epi32(iterations, iter_cmp);
@@ -345,12 +348,10 @@ pub unsafe fn mandelbrotf32_simd(
                 }
             }
 
-            let mut iter: [i32; 4] = [0; 4];
-            x86_64::_mm_storeu_epi32(iter.as_mut_ptr(), iterations);
-            block[ycoord - hstart][xcoord] = iter[3] as IterationType;
-            block[ycoord - hstart][xcoord + 1] = iter[2] as IterationType;
-            block[ycoord - hstart][xcoord + 2] = iter[1] as IterationType;
-            block[ycoord - hstart][xcoord + 3] = iter[0] as IterationType;
+            x86_64::_mm_storeu_epi32(
+                block[ycoord - hstart][xcoord..].as_mut_ptr() as *mut i32,
+                iterations,
+            );
         }
         for xcoord in (width - rem)..width {
             let x = xcoord as f32;
@@ -369,7 +370,7 @@ pub unsafe fn mandelbrotf32_simd(
 }
 
 #[cfg(target_arch = "x86_64")]
-#[target_feature(enable = "avx2")]
+#[target_feature(enable = "avx,avx2")]
 pub unsafe fn mandelbrotf32_simd256(
     hstart: usize,
     hend: usize,
@@ -383,7 +384,6 @@ pub unsafe fn mandelbrotf32_simd256(
 ) -> Block {
     let h = height as f32;
     let mut iterations;
-    let mut iter: [i32; 8] = [0; 8];
     let size = width;
     let rem = size & 7;
 
@@ -439,14 +439,14 @@ pub unsafe fn mandelbrotf32_simd256(
                 iterations = x86_64::_mm256_add_epi32(
                     iterations,
                     x86_64::_mm256_set_epi32(
-                        (value & 128) >> 7,
-                        (value & 64) >> 6,
-                        (value & 32) >> 5,
-                        (value & 16) >> 4,
-                        (value & 8) >> 3,
-                        (value & 4) >> 2,
-                        (value & 2) >> 1,
                         value & 1,
+                        (value & 2) >> 1,
+                        (value & 4) >> 2,
+                        (value & 8) >> 3,
+                        (value & 16) >> 4,
+                        (value & 32) >> 5,
+                        (value & 64) >> 6,
+                        (value & 128) >> 7,
                     ),
                 );
 
@@ -456,15 +456,10 @@ pub unsafe fn mandelbrotf32_simd256(
                     break;
                 }
             }
-            x86_64::_mm256_storeu_epi32(iter.as_mut_ptr(), iterations);
-            block[ycoord - hstart][xcoord] = iter[7] as IterationType;
-            block[ycoord - hstart][xcoord + 1] = iter[6] as IterationType;
-            block[ycoord - hstart][xcoord + 2] = iter[5] as IterationType;
-            block[ycoord - hstart][xcoord + 3] = iter[4] as IterationType;
-            block[ycoord - hstart][xcoord + 4] = iter[3] as IterationType;
-            block[ycoord - hstart][xcoord + 5] = iter[2] as IterationType;
-            block[ycoord - hstart][xcoord + 6] = iter[1] as IterationType;
-            block[ycoord - hstart][xcoord + 7] = iter[0] as IterationType;
+            x86_64::_mm256_storeu_epi32(
+                block[ycoord - hstart][xcoord..].as_mut_ptr() as *mut i32,
+                iterations,
+            );
         }
         for xcoord in (width - rem)..width {
             let x = xcoord as f32;
